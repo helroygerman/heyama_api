@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { ObjectEntity, ObjectDocument } from './schemas/object.schema';
 import { CreateObjectDto } from './dto/create-object.dto';
 import { FilesService } from '../files/files.service';
+import { ObjectsGateway } from './objects.gateway';
 import { Express } from 'express';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class ObjectsService {
     @InjectModel(ObjectEntity.name)
     private readonly objectModel: Model<ObjectDocument>,
     private readonly filesService: FilesService,
+    private readonly objectsGateway: ObjectsGateway,
   ) {}
 
   async create(
@@ -29,7 +31,12 @@ export class ObjectsService {
       imageUrl,
     });
 
-    return created.save();
+    const saved = await created.save();
+
+    // Notifier tous les clients (web, mobile) en temps réel
+    this.objectsGateway.emitObjectCreated(saved);
+
+    return saved;
   }
 
   async findAll() {
@@ -50,11 +57,12 @@ export class ObjectsService {
       throw new NotFoundException(`Object with id ${id} not found`);
     }
 
+    // suppression image dans B2
     if (object.imageUrl) {
       const url = object.imageUrl as string;
       const parts = url.split('.backblazeb2.com/');
       if (parts.length === 2) {
-        const key = parts[1];
+        const key = parts[1]; // objects/uuid.ext
         await this.filesService.deleteObject(key);
       }
     }

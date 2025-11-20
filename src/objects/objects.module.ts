@@ -4,6 +4,7 @@ import { ObjectsService } from './objects.service';
 import { ObjectsController } from './objects.controller';
 import { ObjectEntity, ObjectSchema } from './schemas/object.schema';
 import { FilesService } from '../files/files.service';
+import { ObjectsGateway } from './objects.gateway';
 
 @Module({
   imports: [
@@ -12,6 +13,6 @@ import { FilesService } from '../files/files.service';
     ]),
   ],
   controllers: [ObjectsController],
-  providers: [ObjectsService, FilesService],
+  providers: [ObjectsService, FilesService, ObjectsGateway],
 })
 export class ObjectsModule {}
